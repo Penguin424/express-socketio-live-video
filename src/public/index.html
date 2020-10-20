@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <script src="/socket.io/socket.io.js"></script>
+
+        <title>Emitir el video en vivo</title>
+    </head>
+    <body> 
+
+        <h1>EMICION EN DIRECTO</h1>
+        
+        <button id="btn">
+            Emitir
+        </button>
+
+        <video 
+            autoplay="true" 
+            src="" 
+            id="video" 
+            style="height: 600px; width: 800px;"
+        >
+        </video>
+
+        <canvas id="preview" >
+
+        </canvas>
+
+        <div class="status"></div>
+
+        <script>
+            
+            const publicarMensaje = (msg) => 
+            {
+                document.querySelector('.status').innerText = msg;
+            }
+
+            const loadCamara = (stream) => 
+            {
+                video.srcObject = stream;
+                publicarMensaje('camara funcionando');
+            }
+
+            const errorCamara = () => 
+            {
+                publicarMensaje('camara a fallado');
+            }
+
+            const verVideo = (video, context) => 
+            {
+                context.drawImage(video, 0, 0, context.with, context.height)
+                socket.emit('stream', canvas.toDataURL('image/webp'));
+            }
+
+            let canvas = document.querySelector('#preview');
+            let context = canvas.getContext('2d');
+            let btn = document.querySelector('#btn');
+            let video = document.querySelector('#video');  
+
+            canvas.style.display = 'none';
+            canvas.with = 212;
+            canvas.height = 384;
+
+            context.with = canvas.with;
+            context.height = canvas.height;
+
+            let socket = io();
+            
+            btn.addEventListener('click', () => 
+            {
+                navigator.getUserMedia = (
+                    navigator.getUserMedia || 
+                    navigator.webkitGetUserMedia || 
+                    navigator.mozGetUserMedia || 
+                    navigator.msgGetUserMedia
+                );
+
+                if(navigator.getUserMedia)
+                {
+                    navigator.getUserMedia({video: true}, loadCamara, errorCamara);
+                }
+
+                let intervalo = setInterval(() => {
+                    verVideo(video, context);
+                }, 50);
+            });
+
+        </script>
+
+    </body>
+</html>
